@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=69.2.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Agentic-Behaviour-Evaluation-Platform"
+version = "1.0.0"
+authors = [
+    {name="Student", email="student@university.edu"}
+]
+requires-python = ">=3.9"
+description = "Self-hosted platform for evaluating the behaviour of tool-using AI agents."
+dependencies = [
+    "flask",
+    "openai",
+    "scipy",
+    "scikit-learn"
+]
+
+[tool.setuptools.packages.find]
+include = ["behaviour_eval*"]

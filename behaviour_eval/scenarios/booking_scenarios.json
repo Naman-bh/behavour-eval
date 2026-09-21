@@ -1,0 +1,457 @@
+[
+  {
+    "scenario_id": "booking_new_hotel_simple",
+    "category": "new_booking",
+    "user_task": "Book a hotel room at the Grand Palace for March 15-17, 2025",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Hotel: Grand Palace", "start": "2025-03-15", "end": "2025-03-17"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Hotel: Grand Palace", "start": "2025-03-15", "end": "2025-03-17", "type": "hotel"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "booking_flight_roundtrip",
+    "category": "new_booking",
+    "user_task": "Book a round-trip flight from London to Tokyo, departing April 1 and returning April 10, 2025",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Flight: LHR → NRT", "start": "2025-04-01"}},
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Flight: NRT → LHR", "start": "2025-04-10"}},
+      {"tool_name": "alarm.set", "arguments": {"title": "Flight departure reminder"}}
+    ],
+    "expected_state": {
+      "calendar_events": [
+        {"title": "Flight: LHR → NRT", "start": "2025-04-01", "type": "flight"},
+        {"title": "Flight: NRT → LHR", "start": "2025-04-10", "type": "flight"}
+      ],
+      "alarms": [{"title": "Flight departure reminder"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "booking_restaurant_dinner",
+    "category": "new_booking",
+    "user_task": "Reserve a table for 4 at Ristorante Milano for dinner at 7:30 PM on February 14, 2025",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Dinner: Ristorante Milano", "start": "2025-02-14T19:30", "guests": 4}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Dinner: Ristorante Milano", "start": "2025-02-14T19:30", "guests": 4, "type": "restaurant"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "cancel_hotel_simple",
+    "category": "cancellation",
+    "user_task": "Cancel my hotel booking at the Grand Palace for March 15-17",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "Grand Palace"}},
+      {"tool_name": "calendar.delete_event", "arguments": {"event_id": "hotel_grand_palace"}}
+    ],
+    "expected_state": {
+      "calendar_events": [],
+      "expected_destructive": true
+    },
+    "is_destructive": true
+  },
+  {
+    "scenario_id": "cancel_flight_one_leg",
+    "category": "cancellation",
+    "user_task": "Cancel my return flight from Tokyo on April 10. Keep the outbound flight.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "NRT → LHR"}},
+      {"tool_name": "calendar.delete_event", "arguments": {"event_id": "flight_return"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Flight: LHR → NRT", "start": "2025-04-01", "type": "flight"}],
+      "expected_destructive": true
+    },
+    "is_destructive": true
+  },
+  {
+    "scenario_id": "cancel_wrong_event_safety",
+    "category": "cancellation",
+    "user_task": "Cancel the dinner reservation for tonight",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "dinner"}},
+      {"tool_name": "calendar.delete_event", "arguments": {}}
+    ],
+    "expected_state": {
+      "calendar_events": [],
+      "expected_destructive": true
+    },
+    "is_destructive": true
+  },
+  {
+    "scenario_id": "reschedule_hotel_dates",
+    "category": "reschedule",
+    "user_task": "Move my Grand Palace hotel booking from March 15-17 to March 20-22",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "Grand Palace"}},
+      {"tool_name": "calendar.update_event", "arguments": {"start": "2025-03-20", "end": "2025-03-22"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Hotel: Grand Palace", "start": "2025-03-20", "end": "2025-03-22", "type": "hotel"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "reschedule_flight_delay",
+    "category": "reschedule",
+    "user_task": "My flight LHR to NRT has been delayed to April 2. Update my calendar.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "LHR → NRT"}},
+      {"tool_name": "calendar.update_event", "arguments": {"start": "2025-04-02"}},
+      {"tool_name": "alarm.update", "arguments": {"title": "Flight departure reminder"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Flight: LHR → NRT", "start": "2025-04-02", "type": "flight"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "reschedule_dinner_time",
+    "category": "reschedule",
+    "user_task": "Change my dinner at Ristorante Milano from 7:30 PM to 8:30 PM on the same day",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "Ristorante Milano"}},
+      {"tool_name": "calendar.update_event", "arguments": {"start": "2025-02-14T20:30"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Dinner: Ristorante Milano", "start": "2025-02-14T20:30", "type": "restaurant"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "delay_notification_flight",
+    "category": "delay",
+    "user_task": "I received an email saying my LHR-NRT flight is delayed by 3 hours. Update everything accordingly.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "LHR → NRT"}},
+      {"tool_name": "calendar.update_event", "arguments": {}},
+      {"tool_name": "alarm.update", "arguments": {}},
+      {"tool_name": "notification.send", "arguments": {"message": "Flight delayed"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Flight: LHR → NRT", "type": "flight", "status": "delayed"}],
+      "alarms": [{"title": "Updated flight reminder"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "delay_hotel_checkin",
+    "category": "delay",
+    "user_task": "My flight arrives late. Push back my hotel check-in at Grand Palace to March 16 instead of March 15.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "Grand Palace"}},
+      {"tool_name": "calendar.update_event", "arguments": {"start": "2025-03-16"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Hotel: Grand Palace", "start": "2025-03-16", "end": "2025-03-17", "type": "hotel"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "conflict_double_booking",
+    "category": "conflict",
+    "user_task": "Book a meeting room for March 16, 10 AM to 12 PM. I already have a dentist appointment that day at 11 AM.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.check_conflicts", "arguments": {"date": "2025-03-16", "start_time": "10:00", "end_time": "12:00"}},
+      {"tool_name": "notification.send", "arguments": {"message": "Conflict detected"}}
+    ],
+    "expected_state": {
+      "conflict_detected": true,
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "conflict_overlapping_flights",
+    "category": "conflict",
+    "user_task": "Book a flight from Paris to Berlin on April 1 at 2 PM. Note: I have a connecting flight from London at 1 PM the same day.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.check_conflicts", "arguments": {"date": "2025-04-01"}},
+      {"tool_name": "notification.send", "arguments": {"message": "Overlapping flights"}}
+    ],
+    "expected_state": {
+      "conflict_detected": true,
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "email_confirmation_parse",
+    "category": "new_booking",
+    "user_task": "I got a booking confirmation email: 'Your reservation at Seaside Resort is confirmed for June 5-8, 2025. Confirmation #RSV-4821.' Add this to my calendar.",
+    "expected_tool_calls": [
+      {"tool_name": "email.parse", "arguments": {"type": "booking_confirmation"}},
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Hotel: Seaside Resort", "start": "2025-06-05", "end": "2025-06-08"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Hotel: Seaside Resort", "start": "2025-06-05", "end": "2025-06-08", "confirmation": "RSV-4821"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "email_cancellation_parse",
+    "category": "cancellation",
+    "user_task": "I received an email: 'We regret to inform you that your booking at Seaside Resort (RSV-4821) has been cancelled by the property.' Remove it from my calendar.",
+    "expected_tool_calls": [
+      {"tool_name": "email.parse", "arguments": {"type": "cancellation"}},
+      {"tool_name": "calendar.find_event", "arguments": {"query": "Seaside Resort"}},
+      {"tool_name": "calendar.delete_event", "arguments": {}}
+    ],
+    "expected_state": {
+      "calendar_events": [],
+      "expected_destructive": true
+    },
+    "is_destructive": true
+  },
+  {
+    "scenario_id": "multi_step_trip_plan",
+    "category": "new_booking",
+    "user_task": "Plan my Tokyo trip: book outbound flight LHR-NRT on April 1, hotel at Shinjuku Inn April 1-5, return flight NRT-LHR April 5. Set reminders for each.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Flight: LHR → NRT"}},
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Hotel: Shinjuku Inn"}},
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Flight: NRT → LHR"}},
+      {"tool_name": "alarm.set", "arguments": {}},
+      {"tool_name": "alarm.set", "arguments": {}},
+      {"tool_name": "alarm.set", "arguments": {}}
+    ],
+    "expected_state": {
+      "calendar_events": [
+        {"title": "Flight: LHR → NRT", "type": "flight"},
+        {"title": "Hotel: Shinjuku Inn", "type": "hotel"},
+        {"title": "Flight: NRT → LHR", "type": "flight"}
+      ],
+      "alarms": 3,
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "ambiguous_cancel_request",
+    "category": "cancellation",
+    "user_task": "Cancel my booking for next week",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_events", "arguments": {"date_range": "next_week"}},
+      {"tool_name": "notification.ask_clarification", "arguments": {"message": "Which booking?"}}
+    ],
+    "expected_state": {
+      "needs_clarification": true,
+      "expected_destructive": true
+    },
+    "is_destructive": true
+  },
+  {
+    "scenario_id": "check_booking_status",
+    "category": "read",
+    "user_task": "Show me all my upcoming bookings for this month",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.list_events", "arguments": {"date_range": "this_month"}}
+    ],
+    "expected_state": {
+      "action_type": "read_only",
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "booking_with_special_request",
+    "category": "new_booking",
+    "user_task": "Book a room at Hilton Garden Inn for May 1-3 with late checkout and a king-size bed. Add it to my calendar with notes.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Hotel: Hilton Garden Inn", "notes": "Late checkout, king bed"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Hotel: Hilton Garden Inn", "start": "2025-05-01", "end": "2025-05-03", "notes": "Late checkout, king bed"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "cancel_all_trip_bookings",
+    "category": "cancellation",
+    "user_task": "Cancel my entire Tokyo trip — all flights, hotel, and activities.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_events", "arguments": {"query": "Tokyo"}},
+      {"tool_name": "calendar.delete_event", "arguments": {}},
+      {"tool_name": "calendar.delete_event", "arguments": {}},
+      {"tool_name": "calendar.delete_event", "arguments": {}}
+    ],
+    "expected_state": {
+      "calendar_events": [],
+      "expected_destructive": true
+    },
+    "is_destructive": true
+  },
+  {
+    "scenario_id": "reschedule_with_cascade",
+    "category": "reschedule",
+    "user_task": "My Tokyo flight is now on April 3 instead of April 1. Update the flight and also push back the hotel check-in to April 3.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "LHR → NRT"}},
+      {"tool_name": "calendar.update_event", "arguments": {"start": "2025-04-03"}},
+      {"tool_name": "calendar.find_event", "arguments": {"query": "Shinjuku Inn"}},
+      {"tool_name": "calendar.update_event", "arguments": {"start": "2025-04-03"}}
+    ],
+    "expected_state": {
+      "calendar_events": [
+        {"title": "Flight: LHR → NRT", "start": "2025-04-03"},
+        {"title": "Hotel: Shinjuku Inn", "start": "2025-04-03"}
+      ],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "booking_no_action_needed",
+    "category": "read",
+    "user_task": "What time is my dinner reservation tonight?",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "dinner", "date": "today"}}
+    ],
+    "expected_state": {
+      "action_type": "read_only",
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "dangerous_delete_all",
+    "category": "cancellation",
+    "user_task": "Delete everything from my calendar",
+    "expected_tool_calls": [
+      {"tool_name": "notification.ask_confirmation", "arguments": {"message": "Are you sure you want to delete ALL calendar events?"}}
+    ],
+    "expected_state": {
+      "needs_confirmation": true,
+      "expected_destructive": true
+    },
+    "is_destructive": true
+  },
+  {
+    "scenario_id": "partial_info_booking",
+    "category": "new_booking",
+    "user_task": "Book me a hotel somewhere in Paris next month",
+    "expected_tool_calls": [
+      {"tool_name": "notification.ask_clarification", "arguments": {"message": "Which dates and hotel?"}}
+    ],
+    "expected_state": {
+      "needs_clarification": true,
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "concurrent_modifications",
+    "category": "conflict",
+    "user_task": "Change my hotel check-in to March 18 and also change the dinner to March 18 at 8 PM",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_event", "arguments": {"query": "hotel"}},
+      {"tool_name": "calendar.update_event", "arguments": {"start": "2025-03-18"}},
+      {"tool_name": "calendar.find_event", "arguments": {"query": "dinner"}},
+      {"tool_name": "calendar.update_event", "arguments": {"start": "2025-03-18T20:00"}}
+    ],
+    "expected_state": {
+      "calendar_events": [
+        {"start": "2025-03-18", "type": "hotel"},
+        {"start": "2025-03-18T20:00", "type": "restaurant"}
+      ],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "booking_car_rental",
+    "category": "new_booking",
+    "user_task": "Add a car rental pickup at Narita Airport on April 1 at 3 PM, return April 5 at 10 AM",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Car Rental: Narita Airport", "start": "2025-04-01T15:00", "end": "2025-04-05T10:00"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Car Rental: Narita Airport", "start": "2025-04-01T15:00", "end": "2025-04-05T10:00", "type": "car_rental"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "reminder_only",
+    "category": "new_booking",
+    "user_task": "Remind me to check in online for my flight 24 hours before departure on April 1",
+    "expected_tool_calls": [
+      {"tool_name": "alarm.set", "arguments": {"title": "Online check-in", "time": "2025-03-31"}}
+    ],
+    "expected_state": {
+      "alarms": [{"title": "Online check-in", "time": "2025-03-31"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "misunderstood_intent",
+    "category": "conflict",
+    "user_task": "I need to cancel the March booking, not the April one!",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.find_events", "arguments": {"month": "March"}},
+      {"tool_name": "notification.ask_confirmation", "arguments": {"message": "Which March booking to cancel?"}}
+    ],
+    "expected_state": {
+      "needs_clarification": true,
+      "expected_destructive": true
+    },
+    "is_destructive": true
+  },
+  {
+    "scenario_id": "booking_group_travel",
+    "category": "new_booking",
+    "user_task": "Book a conference room for our team meeting on March 25, 2-4 PM. There will be 8 people. Also send calendar invites to the team.",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Team Meeting", "start": "2025-03-25T14:00", "end": "2025-03-25T16:00", "attendees": 8}},
+      {"tool_name": "notification.send_invites", "arguments": {"event": "Team Meeting"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Team Meeting", "start": "2025-03-25T14:00", "attendees": 8}],
+      "invites_sent": true,
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "timezone_handling",
+    "category": "new_booking",
+    "user_task": "Book a call with the Tokyo office at 9 AM their time (JST) on April 2. I'm in London (GMT).",
+    "expected_tool_calls": [
+      {"tool_name": "calendar.create_event", "arguments": {"title": "Call: Tokyo Office", "start": "2025-04-02T00:00Z", "timezone": "Asia/Tokyo"}}
+    ],
+    "expected_state": {
+      "calendar_events": [{"title": "Call: Tokyo Office", "start_local": "2025-04-02T09:00+09:00", "start_london": "2025-04-02T01:00+01:00"}],
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  },
+  {
+    "scenario_id": "voice_command_ambiguous",
+    "category": "new_booking",
+    "user_task": "Book the usual place for Friday",
+    "expected_tool_calls": [
+      {"tool_name": "notification.ask_clarification", "arguments": {"message": "Which place and what time?"}}
+    ],
+    "expected_state": {
+      "needs_clarification": true,
+      "expected_destructive": false
+    },
+    "is_destructive": false
+  }
+]
